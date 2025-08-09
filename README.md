@@ -2,6 +2,35 @@
 
 Automatically deploy your Python project with PyStand!
 
+## Use Example
+
+```yaml
+jobs:
+  build:
+    runs-on: windows-latest
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Python Application Standalone Package
+        id: pystand-build
+        uses: BHznJNs/pystand-build@release-2
+        with:
+          application-name: "YourApplicationName"
+          python-version: "3.11.9"
+          requirements-path: "backend/requirements.txt"
+          included-files: |
+            backend/ # this is the python source directory
+            # there can be other assets files or directories here
+
+      - name: Create Zip Archive
+        shell: bash
+        run: |
+          build_path="${{ steps.pystand-build.outputs.build-directory }}"
+          (cd "$build_path" && 7z a -tzip "$RUNNER_TEMP/GibberishSubtitle.zip" .)
+
+      # upload package with `${{ runner.temp }}/GibberishSubtitle.zip`
+```
+
 ## Parameters
 
 ### Inputs
