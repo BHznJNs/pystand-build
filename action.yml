@@ -107,7 +107,21 @@ runs:
         set -e
         build_path="${{ steps.init-build-directory.outputs.build-directory }}"
 
-        IFS=$'\n' read -r -a ITEMS <<< "${{ inputs.included-files }}"
+        # resolves multi-line input of GitHub Actions
+        process_input() {
+          local input="$1"
+          # remove return symbol, split by line, trim spaces
+          echo "$input" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$'
+        }
+
+        ITEMS=()
+        while IFS= read -r line; do
+          [[ -n "$line" ]] && ITEMS+=("$line")
+        done < <(process_input "${included_files}")
+
+        echo "=== Processed Items ==="
+        printf 'Item: "%s"\n' "${ITEMS[@]}"
+        echo "=== End Processed Items ==="
 
         for item in "${ITEMS[@]}"; do
           echo "Processing: $item"
@@ -118,10 +132,8 @@ runs:
           fi
           
           if [ -d "$item" ]; then
-            echo "Copying directory: $item"
             cp -rv "$item" "$build_path/"
           elif [ -f "$item" ]; then
-            echo "Copying file: $item"
             cp -v -- "$item" "$build_path/"
           else
             echo "::warning file=$item::Item is not a regular file or directory, skipped."
