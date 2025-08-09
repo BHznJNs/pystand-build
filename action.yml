@@ -1,0 +1,122 @@
+name: 'Build Python Application Standalone Package'
+description: 'An GitHub Actions used to automatically deploy your Python project with PyStand!'
+author: 'BHznJNs'
+
+inputs:
+  application-name:
+    description: "The application name of standalone package."
+    required: true
+  application-type:
+    description: "The application type, must be one of 'CLI' and 'GUI'."
+    required: false
+    default: "GUI"
+  python-version:
+    description: "The target Python embedded version to use"
+    required: true
+    default: "3.11.9"
+  pystand-entry-file:
+    description: "The entry file path for PyStand."
+    required: false
+    default: "PyStand.py"
+  requirements-path:
+    description: "The path to the requirements.txt file"
+    required: true
+  included-files:
+    description: |
+      Directories and files to be included in the build directory.
+      For directories, they will be copied to <build-directory>/<directory-name>;
+      for files, they will be copied to <build-directory>/
+    required: true
+
+outputs:
+  build-directory:
+    description: "The built directory, can be used to create archive or installer."
+    value: ${{ steps.init-build-directory.outputs.build-directory }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    
+    - name: Initialize build directory
+      id: init-build-directory
+      shell: bash
+      run: |
+        build_path="${RUNNER_TEMP}/pystand-build"
+        mkdir -p "$build_path"
+        echo "build-directory=$build_path" >> "$GITHUB_OUTPUT"
+
+    - name: Install Dependencies for PyStand Package
+      shell: bash
+      run: |
+        python -m venv venv
+        source venv/Scripts/activate
+        pip install -r "${{ inputs.requirements-path }}"
+
+        # move dependencies the build directory
+        build_path="${{ steps.init-build-directory.outputs.build-directory }}"
+
+        # Windows-only path; keep as-is until cross-platform support is needed
+        cp -r ./venv/Lib/site-packages "$build_path/site-packages"
+        rm -rf ./venv
+
+    - name: Download and Extract Python Embedded
+      id: setup-python-embedded
+      uses: BHznJNs/setup-python-embedded@release-2
+      with:
+        python-version: ${{ inputs.python-version }}
+        arch: "amd64"
+
+    - name: Move and rename Python Embedded files
+      shell: bash
+      run: |
+        build_path="${{ steps.init-build-directory.outputs.build-directory }}"
+        python_embedded_path="${{ steps.setup-python-embedded.outputs.python-embedded-path }}"
+        mv "$python_embedded_path" "$build_path/runtime"
+    
+    - name: Download PyStand release
+      uses: robinraju/release-downloader@v1
+      with:
+        repository: skywind3000/PyStand
+        tag: 1.1.5
+        fileName: PyStand-v1.1.5-exe.zip
+        out-file-path: ${{ runner.temp }}
+
+    - name: Extract and Rename PyStand
+      shell: bash
+      run: |
+        set -e
+        cd "$RUNNER_TEMP"
+
+        mkdir -p pystand
+        unzip -q PyStand-v1.1.5-exe.zip -d pystand
+
+        build_path="${{ steps.init-build-directory.outputs.build-directory }}"
+        cp "pystand/PyStand-x64-${{ inputs.application-type }}/PyStand.exe" "$build_path/${{ inputs.application-name }}.exe"
+        rm -f PyStand-v1.1.5-exe.zip
+        rm -rf pystand
+
+    - name: Copy Sources and Assets to Build directory
+      shell: bash
+      run: |
+        set -e
+        build_path="${{ steps.init-build-directory.outputs.build-directory }}"
+
+        IFS=$'\n' read -r -a ITEMS <<< "${{ inputs.included-files }}"
+
+        for item in "${ITEMS[@]}"; do
+          [[ -z "$item" ]] && continue # skip empty lines
+          if [[ -d "$item" ]]; then
+            cp -r "$item" "$build_path/"
+          elif [[ -f "$item" ]]; then
+            cp "$item" "$build_path/"
+          else
+            echo "::warning file=$item::Item does not exist, skipped."
+          fi
+        done
+        cp "${{ inputs.pystand-entry-file }}" "$build_path/${{ inputs.application-name }}.py"
