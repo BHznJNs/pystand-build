@@ -11,7 +11,7 @@ inputs:
     required: false
     default: "GUI"
   python-version:
-    description: "The target Python embedded version to use"
+    description: "The target Python embedded version to use."
     required: true
     default: "3.11.9"
   pystand-entry-file:
@@ -19,7 +19,7 @@ inputs:
     required: false
     default: "PyStand.py"
   requirements-path:
-    description: "The path to the requirements.txt file"
+    description: "The path to the requirements.txt file."
     required: true
   included-files:
     description: |
