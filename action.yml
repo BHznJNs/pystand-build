@@ -110,13 +110,22 @@ runs:
         IFS=$'\n' read -r -a ITEMS <<< "${{ inputs.included-files }}"
 
         for item in "${ITEMS[@]}"; do
-          [[ -z "$item" ]] && continue # skip empty lines
-          if [[ -d "$item" ]]; then
-            cp -r "$item" "$build_path/"
-          elif [[ -f "$item" ]]; then
-            cp "$item" "$build_path/"
-          else
+          echo "Processing: $item"
+          
+          if [ ! -e "$item" ]; then
             echo "::warning file=$item::Item does not exist, skipped."
+            continue
+          fi
+          
+          if [ -d "$item" ]; then
+            echo "Copying directory: $item"
+            cp -rv "$item" "$build_path/"
+          elif [ -f "$item" ]; then
+            echo "Copying file: $item"
+            cp -v -- "$item" "$build_path/"
+          else
+            echo "::warning file=$item::Item is not a regular file or directory, skipped."
           fi
         done
+
         cp "${{ inputs.pystand-entry-file }}" "$build_path/${{ inputs.application-name }}.py"
