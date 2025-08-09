@@ -1,2 +1,3 @@
-# pystand-build
-Deploy your Python project with PyStand!
+# PyStand build
+
+Automatically deploy your Python project with PyStand!
