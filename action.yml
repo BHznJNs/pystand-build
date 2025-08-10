@@ -103,6 +103,7 @@ runs:
 
     - name: Copy Sources and Assets to Build directory
       id: copy-sources
+      shell: bash
       run: python scripts/copy_files.py
       env:
         BUILD_PATH: ${{ steps.init-build-directory.outputs.build-directory }}
