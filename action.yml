@@ -102,42 +102,10 @@ runs:
         rm -rf pystand
 
     - name: Copy Sources and Assets to Build directory
-      shell: bash
-      run: |
-        set -e
-        build_path="${{ steps.init-build-directory.outputs.build-directory }}"
-
-        # resolves multi-line input of GitHub Actions
-        process_input() {
-          local input="$1"
-          # remove return symbol, split by line, trim spaces
-          echo "$input" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$'
-        }
-
-        ITEMS=()
-        while IFS= read -r line; do
-          [[ -n "$line" ]] && ITEMS+=("$line")
-        done < <(process_input "${{ inputs.included-files }}")
-
-        echo "=== Processed Items ==="
-        printf 'Item: "%s"\n' "${ITEMS[@]}"
-        echo "=== End Processed Items ==="
-
-        for item in "${ITEMS[@]}"; do
-          echo "Processing: $item"
-          
-          if [ ! -e "$item" ]; then
-            echo "::warning file=$item::Item does not exist, skipped."
-            continue
-          fi
-          
-          if [ -d "$item" ]; then
-            cp -rv "$item" "$build_path/"
-          elif [ -f "$item" ]; then
-            cp -v -- "$item" "$build_path/"
-          else
-            echo "::warning file=$item::Item is not a regular file or directory, skipped."
-          fi
-        done
-
-        cp "${{ inputs.pystand-entry-file }}" "$build_path/${{ inputs.application-name }}.py"
+      id: copy-sources
+      run: python scripts/copy_files.py
+      env:
+        BUILD_PATH: ${{ steps.init-build-directory.outputs.build-directory }}
+        INCLUDED_FILES: ${{ inputs.included-files }}
+        PYSTAND_ENTRY_FILE: ${{ inputs.pystand-entry-file }}
+        APPLICATION_NAME: ${{ inputs.application-name }}
