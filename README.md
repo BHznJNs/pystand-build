@@ -13,7 +13,7 @@ jobs:
 
       - name: Build Python Application Standalone Package
         id: pystand-build
-        uses: BHznJNs/pystand-build@release-2
+        uses: BHznJNs/pystand-build@release-5
         with:
           application-name: "YourApplicationName"
           python-version: "3.11.9"
