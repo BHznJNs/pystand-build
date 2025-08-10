@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 import sys
-from unittest.mock import patch, ANY
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scripts')))
 from copy_files import process_input, main
@@ -50,10 +50,13 @@ class TestCopyFiles(unittest.TestCase):
     @patch('sys.exit')
     @patch('builtins.print')
     def test_main_missing_env_var(self, mock_print, mock_exit):
+        mock_exit.side_effect = SystemExit(1)
         with patch.dict(os.environ, {}, clear=True):
-            main()
+            with self.assertRaises(SystemExit) as cm:
+                main()
+            self.assertEqual(cm.exception.code, 1)
             mock_exit.assert_called_once_with(1)
-            mock_print.assert_any_call(ANY) # Check for any error message
+            mock_print.assert_called() # Check that print was called
 
     @patch('builtins.print')
     def test_main_copy_operations(self, mock_print):

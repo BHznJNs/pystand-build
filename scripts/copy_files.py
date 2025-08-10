@@ -17,6 +17,7 @@ def main():
         included_files_str = os.environ.get('INCLUDED_FILES', '')
         entry_file = os.environ['PYSTAND_ENTRY_FILE']
         app_name = os.environ['APPLICATION_NAME']
+        print("=== Debug: All environment variables accessed successfully ===")
     except KeyError as e:
         print("Environment variable missing: ", e)
         sys.exit(1)
