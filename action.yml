@@ -78,7 +78,7 @@ runs:
         build_path="${{ steps.init-build-directory.outputs.build-directory }}"
         python_embedded_path="${{ steps.setup-python-embedded.outputs.python-embedded-path }}"
         mv "$python_embedded_path" "$build_path/runtime"
-    
+
     - name: Download PyStand release
       uses: robinraju/release-downloader@v1
       with:
@@ -104,7 +104,7 @@ runs:
     - name: Copy Sources and Assets to Build directory
       id: copy-sources
       shell: bash
-      run: python scripts/copy_files.py
+      run: python "$GITHUB_ACTION_PATH/scripts/copy_files.py"
       env:
         BUILD_PATH: ${{ steps.init-build-directory.outputs.build-directory }}
         INCLUDED_FILES: ${{ inputs.included-files }}
