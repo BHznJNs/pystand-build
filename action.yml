@@ -117,7 +117,7 @@ runs:
         ITEMS=()
         while IFS= read -r line; do
           [[ -n "$line" ]] && ITEMS+=("$line")
-        done < <(process_input "${included_files}")
+        done < <(process_input "${{ inputs.included-files }}")
 
         echo "=== Processed Items ==="
         printf 'Item: "%s"\n' "${ITEMS[@]}"
