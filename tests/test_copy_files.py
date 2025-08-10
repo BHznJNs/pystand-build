@@ -6,7 +6,7 @@ import sys
 from unittest.mock import patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scripts')))
-from copy_files import process_input, main
+from copy_files import process_input, main, get_target_path
 
 class TestCopyFiles(unittest.TestCase):
 
@@ -98,6 +98,87 @@ class TestCopyFiles(unittest.TestCase):
             main()
             self.assertTrue(os.path.exists(os.path.join(self.build_dir, 'app_with_no_includes.py')))
             self.assertFalse(os.path.exists(os.path.join(self.build_dir, 'file1.txt')))
+
+
+    @patch('scripts.copy_files.os.path.isdir')
+    def test_get_target_path_for_file(self, mock_isdir):
+        # 测试文件的目标路径应该直接是构建路径
+        mock_isdir.return_value = False  # 模拟文件路径
+        build_path = "/path/to/build"
+        file_path = "/path/to/file.txt"
+        expected = "/path/to/build"
+        result = get_target_path(file_path, build_path)
+        self.assertEqual(result, expected)
+
+    @patch('scripts.copy_files.os.path.isdir')
+    def test_get_target_path_for_directory(self, mock_isdir):
+        # 测试目录的目标路径应该是构建路径下以目录名命名的子目录
+        mock_isdir.return_value = True  # 模拟目录路径
+        build_path = "/path/to/build"
+        dir_path = "/path/to/source/assets"
+        expected = os.path.join(build_path, "assets")
+        result = get_target_path(dir_path, build_path)
+        self.assertEqual(result, expected)
+
+    @patch('scripts.copy_files.os.path.isdir')
+    def test_get_target_path_for_directory_with_trailing_slash(self, mock_isdir):
+        # 测试带尾部斜杠的目录路径
+        mock_isdir.return_value = True  # 模拟目录路径
+        build_path = "/path/to/build"
+        dir_path = "/path/to/source/assets/"
+        expected = os.path.join(build_path, "assets")
+        result = get_target_path(dir_path, build_path)
+        self.assertEqual(result, expected)
+
+    @patch('scripts.copy_files.os.path.isdir')
+    def test_get_target_path_for_directory_with_multiple_trailing_slashes(self, mock_isdir):
+        # 测试带多个尾部斜杠的目录路径
+        mock_isdir.return_value = True  # 模拟目录路径
+        build_path = "/path/to/build"
+        dir_path = "/path/to/source/assets///"
+        expected = os.path.join(build_path, "assets")
+        result = get_target_path(dir_path, build_path)
+        self.assertEqual(result, expected)
+
+    @patch('scripts.copy_files.os.path.isdir')
+    def test_get_target_path_for_root_directory(self, mock_isdir):
+        # 测试根目录的情况
+        mock_isdir.return_value = True  # 模拟目录路径
+        build_path = "/path/to/build"
+        dir_path = "/assets"
+        expected = os.path.join(build_path, "assets")
+        result = get_target_path(dir_path, build_path)
+        self.assertEqual(result, expected)
+
+    @patch('scripts.copy_files.os.path.isdir')
+    def test_get_target_path_for_relative_directory(self, mock_isdir):
+        # 测试相对目录路径
+        mock_isdir.return_value = True  # 模拟目录路径
+        build_path = "/path/to/build"
+        dir_path = "assets"
+        expected = os.path.join(build_path, "assets")
+        result = get_target_path(dir_path, build_path)
+        self.assertEqual(result, expected)
+
+    @patch('scripts.copy_files.os.path.isdir')
+    def test_get_target_path_for_relative_directory_with_subdir(self, mock_isdir):
+        # 测试相对目录路径（包含子目录）
+        mock_isdir.return_value = True  # 模拟目录路径
+        build_path = "/path/to/build"
+        dir_path = "src/assets"
+        expected = os.path.join(build_path, "assets")
+        result = get_target_path(dir_path, build_path)
+        self.assertEqual(result, expected)
+
+    @patch('scripts.copy_files.os.path.isdir')
+    def test_get_target_path_for_relative_directory_with_trailing_slash(self, mock_isdir):
+        # 测试带尾部斜杠的相对目录路径
+        mock_isdir.return_value = True  # 模拟目录路径
+        build_path = "/path/to/build"
+        dir_path = "src/assets/"
+        expected = os.path.join(build_path, "assets")
+        result = get_target_path(dir_path, build_path)
+        self.assertEqual(result, expected)
 
 
 if __name__ == '__main__':

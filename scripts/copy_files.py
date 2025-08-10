@@ -11,6 +11,28 @@ def process_input(input_str: str) -> list[str]:
     # filters empty lines, strips the spaces for every lines
     return [line.strip() for line in input_str.splitlines() if line.strip()]
 
+def get_target_path(source_path: str, build_path: str) -> str:
+    """
+    Get the target path for copying a file or directory.
+    
+    Args:
+        source_path: The source file or directory path
+        build_path: The base build path where files will be copied
+        
+    Returns:
+        The target path where the source should be copied
+    """
+    if os.path.isdir(source_path):
+        # For directories, normalize the path to ensure basename works correctly
+        # even with trailing slashes
+        # Remove both forward and backward slashes
+        normalized_path = source_path.rstrip('/\\')
+        dir_name = os.path.basename(normalized_path)
+        return os.path.join(build_path, dir_name)
+    else:
+        # For files, copy directly to the build path
+        return build_path
+
 def main():
     try:
         build_path = os.environ['BUILD_PATH']
@@ -36,15 +58,15 @@ def main():
                 print(f"::warning file={item}::Item does not exist, skipped.")
                 continue
 
+            target_path = get_target_path(item, build_path)
             if os.path.isdir(item):
                 # Copies the source directory 'item' to the directory under the build dir with the name name.
                 # For example, copies 'src/assets' to 'build_path/assets/'
-                target_dir_path = os.path.join(build_path, os.path.basename(item))
-                print(f"Copying directory '{item}' to '{target_dir_path}'")
-                shutil.copytree(item, target_dir_path, dirs_exist_ok=True)
+                print(f"Copying directory '{item}' to '{target_path}'")
+                shutil.copytree(item, target_path, dirs_exist_ok=True)
             elif os.path.isfile(item):
-                print(f"Copying file '{item}' to '{build_path}'")
-                shutil.copy2(item, build_path)
+                print(f"Copying file '{item}' to '{target_path}'")
+                shutil.copy2(item, target_path)
             else:
                 print(f"::warning file={item}::Item is not a regular file or directory, skipped.")
 
