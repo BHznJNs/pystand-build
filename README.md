@@ -13,7 +13,7 @@ jobs:
 
       - name: Build Python Application Standalone Package
         id: pystand-build
-        uses: BHznJNs/pystand-build@release-5
+        uses: BHznJNs/pystand-build@release-6
         with:
           application-name: "YourApplicationName"
           python-version: "3.11.9"
@@ -26,9 +26,9 @@ jobs:
         shell: bash
         run: |
           build_path="${{ steps.pystand-build.outputs.build-directory }}"
-          (cd "$build_path" && 7z a -tzip "$RUNNER_TEMP/GibberishSubtitle.zip" .)
+          (cd "$build_path" && 7z a -tzip "$RUNNER_TEMP/YouApplicationName.zip" .)
 
-      # upload package with `${{ runner.temp }}/GibberishSubtitle.zip`
+      # upload package with `${{ runner.temp }}/YouApplicationName.zip`
 ```
 
 ## Parameters
